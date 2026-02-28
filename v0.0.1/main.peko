@@ -1,0 +1,409 @@
+//! implements console io operations for Pekoscript
+//  ________  _______   ___  __    ________
+// |\   __  \|\  ___ \ |\  \|\  \ |\   __  \
+// \ \  \|\  \ \   __/|\ \  \/  /|\ \  \|\  \
+//  \ \   ____\ \  \_|/_\ \   ___  \ \  \\\  \
+//   \ \  \___|\ \  \_|\ \ \  \\ \  \ \  \\\  \
+//    \ \__\    \ \_______\ \__\\ \__\ \_______\
+//     \|__|     \|_______|\|__| \|__|\|_______|
+//
+// Copyright 2025 Preston Brown. All Rights Reserved.
+
+/// Prints a string on one line.
+/// 
+/// @param str the string that is printed
+/// 
+/// @example {
+/// console::println("Hello World!"); // prints 'Hello World!'
+/// }
+fn println(str: string) {
+    extern::printf("%s\n", str);
+}
+
+/// Prints a number on one line.
+/// 
+/// @param number the number that is printed
+/// 
+/// @example {
+/// console::println(123.3); // prints '123.3'
+/// console::println(-543);  // prints '-543'
+/// }
+fn println(number: double) {
+    extern::printf("%g\n", number);
+}
+
+/// Prints every item in the provided array on its own line.
+/// 
+/// @param array the array of items to be printed
+/// 
+/// @example {
+/// console::println(#["Bob", "Joe", "Jimmy"]);
+/// 
+/// // prints:
+/// // Bob
+/// // Joe
+/// // Jimmy 
+/// }
+fn println(array: Array<string>) {
+    for str in array {
+        extern::printf("%s ", str);
+    }
+    extern::printf("\n");
+}
+
+/// Prints the provided string to stdout, no newline.
+/// 
+/// @param str the string to be printed
+/// 
+/// @example {
+/// console::print("What is your name? "); // prints 'What is your name? '
+/// }
+fn print(str: string) {
+    extern::printf("%s", str);
+}
+
+/// Prints the provided number to stdout, no newline.
+/// 
+/// @param number the number to be printed
+/// 
+/// @example {
+/// console::print("How old are you? "); // prints 'How old are you? '
+/// }
+fn print(number: double) {
+    extern::printf("%g", number);
+}
+
+/// Prints each item in the provided array to stdout, with each item seperated by a space.
+/// ** No new line is printed at the end
+/// 
+/// @param array the array of items to be printed
+/// 
+/// @example {
+/// console::print(["My", "name", "is", "Joe"]); // prints 'My name is Joe'
+/// }
+fn print(array: Array<String>) {
+    for str in array {
+        extern::printf("%s ", str as string);
+    }
+}
+
+/// Prints a message as an error.
+/// ** Does not exit program
+/// 
+/// @param err the error to be printed
+/// 
+/// @example {
+/// console::error("No such item in list"); // prints 'Error: No such item in list'
+/// } 
+fn error(err: String) {
+    extern::printf("Error: %s\n", err as string);
+}
+
+/// Gets input from stdin until a newline is entered.
+/// 
+/// @param query the query to print before asking for input
+/// 
+/// @example {
+/// name := console::input("What is your name? "); // prints 'What is your name? ' and waits for input
+/// nextInput := console::input(); // doesn't print, but still waits for input
+/// }
+fn input(query: string = "") => string {
+    extern::printf("%s", query);
+
+    user_input := String();
+
+    while true {
+        character := extern::getchar();
+
+        if character == '\n' {
+            break;
+        }
+        
+        user_input.push(character);
+    }
+
+    return user_input;
+}
+
+/// Gets the command line arguments passed to this program.
+fn get_argv() => Array<String> {
+    return system_args;
+}
+
+/// Allows for colorizing and styling strings for printing.
+/// Also allows for console cursor manipulation and text modification.
+module cursor {
+    
+    /// Allows for styling text before printing to console.
+    module styling {
+        
+        /// Stores color info.
+        class RGBcolor {
+            [private] red: int;
+            [private] green: int;  
+            [private] blue: int;
+
+            constructor(red: int = 0, green: int = 0, blue: int = 0) {
+                this.red = red;
+                this.green = green;
+                this.blue = blue;
+            }
+
+            [operator to_string]() => string {
+                return `${red}:${green}:${blue}`
+            }
+        }
+
+        /// Bolds the provided string.
+        /// 
+        /// @param input the string to bold
+        fn bold(input: string) => string {
+            return `\x1b[1m${input}\x1b[0m`;
+        }
+
+        /// Dims the provided string.
+        /// 
+        /// @param input the string to dim
+        fn dim(input: string) => string {
+            return `$\x1b[2m${input}\x1b[0m`;
+        }
+
+        /// Italicizes the provided string.
+        /// 
+        /// @param input the string to italicize
+        fn italic(input: string) => string {
+            return `\x1b[3m${input}\x1b[0m`;
+        }
+
+        /// Underlines the provided string.
+        /// 
+        /// @param input the string to underline
+        fn underline(input: string) => string {
+            return `\x1b[4m${input}\x1b[0m`;
+        }
+
+        /// Makes the provided string blink.
+        /// 
+        /// @param input the string to make blink
+        fn blinking(input: string) => string {
+            return `\x1b[5m${input}\x1b[0m`;
+        }
+
+        /// Reverses the provided string.
+        /// 
+        /// @param input the string to reverse
+        fn reverse(input: string) => string {
+            return `\x1b[7m${input}\x1b[0m`;
+        }
+
+        /// Hides the provided string.
+        /// 
+        /// @param input the string to hide
+        fn hidden(input: string) => string {
+            return `\x1b[8m${input}\x1b[0m`;
+        }
+
+        /// Strikes through the provided string.
+        /// 
+        /// @param input the string to strikethrough
+        fn strikethrough(input: string) => string {
+            return `\x1b[9m${input}\x1b[0m`;
+        }
+
+        /// Makes the font of the provided string black.
+        /// 
+        /// @param input the string to turn black
+        fn black(input: string) => string {
+            return `\x1b[30m${input}\x1b[0m`;
+        }
+
+        /// Makes the font of the provided string black.
+        /// 
+        /// @param input the string to turn black
+        fn highlightBlack(input: string) => string {
+            return `\x1b[40m${input}\x1b[0m`;
+        }
+        
+        /// Makes the font of the provided string red.
+        /// 
+        /// @param input the string to turn red
+        fn red(input: string) => string {
+            return `\x1b[31m${input}\x1b[0m`;
+        }
+        
+        /// Makes the background of the provided string red.
+        /// 
+        /// @param input the string to turn red
+        fn highlightRed(input: string) => string {
+            return `\x1b[41m${input}\x1b[0m`;
+        }
+        
+        /// Makes the font of the provided string green.
+        /// 
+        /// @param input the string to turn blagreenk
+        fn green(input: string) => string {
+            return `\x1b[32m${input}\x1b[0m`;
+        }
+        
+        /// Makes the background of the provided string green.
+        /// 
+        /// @param input the string to turn green
+        fn highlightGreen(input: string) => string {
+            return `\x1b[42m${input}\x1b[0m`;
+        }
+        
+        /// Makes the font of the provided string yellow.
+        /// 
+        /// @param input the string to turn yellow
+        fn yellow(input: string) => string {
+            return `\x1b[33m${input}\x1b[0m`;
+        }
+        
+        /// Makes the background of the provided string yellow.
+        /// 
+        /// @param input the string to turn yellow
+        fn highlightYellow(input: string) => string {
+            return `\x1b[43m${input}\x1b[0m`;
+        }
+        
+        /// Makes the font of the provided string blue.
+        /// 
+        /// @param input the string to turn blue
+        fn blue(input: string) => string {
+            return `\x1b[34m${input}\x1b[0m`;
+        }
+        
+        /// Makes the background of the provided string blue.
+        /// 
+        /// @param input the string to turn blue
+        fn highlightBlue(input: string) => string {
+            return `\x1b[44m${input}\x1b[0m`;
+        }
+        
+        /// Makes the font of the provided string magenta.
+        /// 
+        /// @param input the string to turn magenta
+        fn magenta(input: string) => string {
+            return `\x1b[35m${input}\x1b[0m`;
+        }
+        
+        /// Makes the background of the provided string magenta.
+        /// 
+        /// @param input the string to turn magenta
+        fn highlightMagenta(input: string) => string {
+            return `\x1b[45m${input}\x1b[0m`;
+        }
+        
+        /// Makes the font of the provided string cyan.
+        /// 
+        /// @param input the string to turn cyan
+        fn cyan(input: string) => string {
+            return `\x1b[36m${input}\x1b[0m`;
+        }
+        
+        /// Makes the background of the provided string cyan.
+        /// 
+        /// @param input the string to turn cyan
+        fn highlightCyan(input: string) => string {
+            return `\x1b[46m${input}\x1b[0m`;
+        }
+        
+        /// Makes the font of the provided string white.
+        /// 
+        /// @param input the string to turn white
+        fn white(input: string) => string {
+            return `\x1b[37m${input}\x1b[0m`;
+        }
+        
+        /// Makes the background of the provided string white.
+        /// 
+        /// @param input the string to turn white
+        fn highlightWhite(input: string) => string {
+            return `\x1b[47m${input}\x1b[0m`;
+        }
+
+        /// Sets the font of the provided input to the provided color.
+        /// 
+        /// @param input the string to add color to
+        /// @param color the colors to set the font to
+        fn RGB(input: string, color: RGBcolor) => string {
+            return `\x1b[38;2;${color}m${input}\x1b[0m`;
+        }
+        
+        /// Sets the background of the provided input to the provided color.
+        /// 
+        /// @param input the string to add color to
+        /// @param color the colors to set the background to
+        fn highlightRGB(input: string, color: RGBcolor) => string {
+            return `\x1b[48;2;${color}m${input}\x1b[0m`;
+        }
+    }
+
+    [external hide] fn fflush(file: opaque);
+    [external hide] __stdoutp: opaque = null;
+
+    /// Flushes the stdout.
+    fn flush() {
+        extern::fflush(extern::__stdoutp);
+    }
+
+    /// Moves the cursor left 1 cell.
+    fn left() {
+        extern::printf("\x1b[D");
+        flush();
+    }
+
+    /// Moves the cursor right 1 cell.
+    fn right() {
+        extern::printf("\x1b[C");
+        flush();
+    }
+
+    /// Moves the cursor up 1 line.
+    fn up() {
+        extern::printf("\x1b[A");
+        flush();
+    }
+
+    /// Moves the cursor down 1 line.
+    fn down() {
+        extern::printf("\x1b[B");
+        flush();
+    }
+
+    /// Moves the cursor to the home position of the console (generally the top left).
+    fn home() {
+        extern::printf("\x1b[H");
+        flush();
+    }
+
+    /// Erases the console from the cursor to the end of the current line.
+    fn eraseToEnd() {
+        extern::printf("\x1b[0K");
+        flush();
+    }
+
+    /// Erases the console from the start of the current line to the cursor.
+    fn eraseFromStart() {
+        extern::printf("\x1b[1K");
+        flush();
+    }
+
+    /// Clears the entire console.
+    fn clear() {
+        extern::printf("\x1b[2J");
+        flush();
+    }
+
+    /// Erases the current line.
+    fn eraseLine() {
+        extern::printf("\x1b[2K");
+        flush();
+    }
+
+    /// Moves the cursor to the start of the line.
+    fn moveToStart() {
+        extern::printf("\r");
+        flush();
+    }
+}
